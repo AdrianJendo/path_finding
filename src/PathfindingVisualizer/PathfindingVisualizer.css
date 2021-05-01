@@ -1,0 +1,29 @@
+.grid {
+  margin: 60px 0 0;
+}
+
+.header {
+  margin-top: 30px;
+  min-height: 60px; /*!!*/
+  display: inline-block;
+}
+
+.settings {
+  position: absolute;
+  top: 0px;
+  right: 0px;
+  margin-right: 5px;
+  margin-top: 20px;
+}
+
+.column {
+  float: left;
+  width: 50%;
+}
+
+/* Clear floats after the columns */
+.row:after {
+  content: "";
+  display: table;
+  clear: both;
+}
