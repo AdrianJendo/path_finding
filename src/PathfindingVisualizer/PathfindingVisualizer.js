@@ -5,20 +5,18 @@ import "./PathfindingVisualizer.css";
 import {dijkstra, getShortestPath} from "../algorithms/dijkstra";
 
 const NUMROWS = 20;
-const NUMCOLS = 50;
+const NUMCOLS = 20;
 const START_NODE_ROW = 10;
 const START_NODE_COL = 5;
 const END_NODE_ROW = 10;
-const END_NODE_COL = 35;
-
-//TODO
-//Change Grid Size
+const END_NODE_COL = 15;
 
 //For later
 //Code using A* and also switch between Dijsktra and A*
 
 export function PathfindingVisualizer() {
 
+    //States for handling grid, animation, popup, mouse
     const [grid, setGrid] = useState([]);
     const [mouseIsPressed, setMouseIsPressed] = useState(false);
     const [reset, setReset] = useState(false);
@@ -26,6 +24,7 @@ export function PathfindingVisualizer() {
     const [popupOpen, setPopupOpen] = useState(false);
     const [addWalls, setAddsWalls] = useState(true);
     
+    //States for handling special nodes, gride size
     const [numRows, setNumRows] = useState(NUMROWS);
     const [numCols, setNumCols] = useState(NUMCOLS);
     const [changeStart, setChangeStart] = useState(false);
@@ -34,7 +33,18 @@ export function PathfindingVisualizer() {
     const [endNode, setEndNode] = useState({row:END_NODE_ROW, col:END_NODE_COL});
     const [walls, setWalls] = useState([]);
 
+    //For rows & column dropdown menus
+    const rows = [];
+    for(let i = 10; i<=30; i++){
+        rows.push(i);
+    }
+    const cols = [];
+    for(let i = 10; i<=70; i++){
+        cols.push(i);
+    }
 
+    //function for creating/updating the grid
+    //called whenever dependencies are changed
     const createGrid = useCallback( () => {
         const grid = [];
         for (let row=0; row<numRows; ++row){
@@ -49,16 +59,15 @@ export function PathfindingVisualizer() {
     [numRows, numCols, startNode, endNode, walls]
     );
 
-
+    //set new grid any time function is changed
     useEffect(() => {
         const new_grid = createGrid();
         setGrid(new_grid);
-        console.log('Hey');
     }, [createGrid]);
 
     
-
-    const createNode = (row, col, {start, end, walls}) => {
+    //Returns new node
+    const createNode = (row, col, {start, end, walls}={}) => {
         let start_node = row === start.row && col === start.col;
         let end_node = row === end.row && col === end.col;
         return {
@@ -67,7 +76,7 @@ export function PathfindingVisualizer() {
             isStart : start_node,
             isEnd: end_node,
             isVisited : false,
-            isWall : walls.length && walls[row][col],
+            isWall : walls.length && row<walls.length && col < walls[0].length && walls[row][col],
             isHover : false,
             previousNode : null,
             cost: Infinity
@@ -79,8 +88,8 @@ export function PathfindingVisualizer() {
     const solveDijkstra = () => {
         const start = grid[startNode.row][startNode.col];
         const end = grid[endNode.row][endNode.col];
-        const visited_nodes = dijkstra(grid, start, end); //Either need to reset isVisited property of use Ref to store the classnames
-        const shortest_path_list = getShortestPath(end);
+        const visited_nodes = dijkstra(grid, start, end); //returns a list of visited nodes
+        const shortest_path_list = getShortestPath(end); //returns the shortest path from end node to start node
         animateDijkstra(visited_nodes, shortest_path_list);
         setAnimation(true);
     };
@@ -119,11 +128,13 @@ export function PathfindingVisualizer() {
         }, update_interval * visited_nodes.length)
     };
 
+    //Animates shortest path
     const animateShortestPath = (shortest_path) => {
         for(let i = 0; i < shortest_path.length; ++i){
             setTimeout( () => {
                 const node = shortest_path[i];
                 if(i!==0 && i!==shortest_path.length-1){
+                    //Updating only the class to improve speed/fluidity of animation
                     document.getElementById(`node-${node.row}-${node.col}`).className =
                     'node node-shortest-path';
                 }
@@ -136,78 +147,82 @@ export function PathfindingVisualizer() {
     };
 
     //Coded like this to allow click once to place and click twice to release (must delete handleMouseUp)
+    //Handles all possible events that occur when mouse is clicked on a node
     const handleMouseDown = (row, col) => {
-        if(changeStart){
+        //Updating start node
+        if(changeStart && !grid[row][col].isWall && !grid[row][col].isEnd){
             let start_node = find('start');
             grid[start_node[0]][start_node[1]].isStart = false;
-            /*const newGrid = grid.slice(); //shallow copy of grid
-            const node = newGrid[row][col];
-            const newNode = {
-                ...node,
-                isStart: true
-            };
-            newGrid[row][col] = newNode;*/
-            //setGrid(newGrid);
             setStartNode({row:row, col:col});
             setChangeStart(false);
         }
-        else if (changeEnd){
+        //Updating end node
+        else if (changeEnd && !grid[row][col].isWall && !grid[row][col].isStart){
             let end_node = find('end');
             grid[end_node[0]][end_node[1]].isEnd = false;
-            const newGrid = grid.slice();
-            const node = newGrid[row][col];
-            const newNode = {
-                ...node,
-                isEnd: true
-            };
-            newGrid[row][col] = newNode;
-            //setGrid(newGrid);
             setEndNode({row:row, col:col});
             setChangeEnd(false);
         }
+        //Invalid node selected for new start/end node
+        else if (changeEnd || changeStart){
+            alert('Please choose another space');
+            return;
+        }
+        //Adding a wall
         else if(!mouseIsPressed && !reset && !animation){
-            const newGrid = getNewGridWalls(grid, row, col);
-            setGrid(newGrid);
+            getNewGridWalls(grid, row, col);
+            const walls = getWallsArray();
+            setWalls(walls);
         } 
         setMouseIsPressed(!mouseIsPressed);
     };
 
+    //Handles scenarios for when mouse enters a node
     const handleMouseEnter = (row, col) => {
+        //Changing background colour of node when hovering
+        //Hover for new start node
         if(changeStart && !grid[row][col].isEnd && !grid[row][col].isWall){
             updateGrid("node-hover-start", row, col);
         }
+        //Hover for new end node
         else if(changeEnd && !grid[row][col].isStart && !grid[row][col].isWall){
             updateGrid("node-hover-end", row, col);
         }
         else{
+            //Hover for wall
             if(!(mouseIsPressed || grid[row][col].isWall || grid[row][col].isStart || grid[row][col].isEnd|| grid[row][col].isVisited || reset || animation) && addWalls){
                 updateGrid("node-hover", row, col);
             }
+            //Hover for delete wall
             else if (!addWalls && grid[row][col].isWall && !reset && !animation){
                 updateGrid("node-hover-red", row, col);
             }
+            //Adding a new wall
             if (mouseIsPressed && addWalls && !reset && !animation) {
-                const newGrid = getNewGridWalls(grid, row, col);
-                setGrid(newGrid);
+                getNewGridWalls(grid, row, col);
+                const walls = getWallsArray();
+                setWalls(walls);
             }
         }        
     };
 
-    
+    //Handles scenarios for when mouse leaves a node
     const handleMouseLeave = (row, col) => {
-        if(!(mouseIsPressed || grid[row][col].isWall || grid[row][col].isStart || grid[row][col].isEnd || grid[row][col].isVisited)){
+        //Removing class added from hover
+        if(!(mouseIsPressed || grid[row][col].isWall || grid[row][col].isStart || grid[row][col].isEnd || grid[row][col].isVisited) ||
+            ((changeStart || changeEnd) && !grid[row][col].isStart && !grid[row][col].isEnd && !grid[row][col].isWall))
+        {
             updateGrid("", row, col);
         }
-        else if ((changeStart || changeEnd) && !grid[row][col].isStart && !grid[row][col].isEnd && !grid[row][col].isWall){
-            updateGrid("", row, col);
-        }
+        //Changing previous 'hover class' if node is a wall
         else if (grid[row][col].isWall){
             updateGrid("node-wall", row, col);
         }
-
+        //Remove wall
         if(mouseIsPressed && !addWalls && !reset && !animation) {
-            const newGrid = getNewGridWalls(grid, row, col);
-            setGrid(newGrid);
+            getNewGridWalls(grid, row, col);
+            const walls = getWallsArray();
+            setWalls(walls);
         }
     }
     
@@ -215,18 +230,22 @@ export function PathfindingVisualizer() {
     //If want to click once to place and click again to stop placing, just delete this function (and its calls)
     const handleMouseUp = (row, col) => {
         setMouseIsPressed(false);
+        
         if(!(addWalls||reset||animation)){
-            const newGrid = getNewGridWalls(grid, row, col);
-            setGrid(newGrid);
+            getNewGridWalls(grid, row, col);
+            const walls = getWallsArray();
+            setWalls(walls);
         }
     };
 
+    //Add extra node class to grid space for any hover effects
     const updateGrid = (extra_class, row, col) => {
         document.getElementById(`node-${row}-${col}`).className =
         'node '.concat(extra_class);
     }
 
-
+    //Not actually shallow copy since 2D array, each node object in each column points to original node from grid
+    //Function updated the isWall property for the space
     const getNewGridWalls = (grid, row, col) => {
         const newGrid = grid.slice();
         const node = newGrid[row][col];
@@ -235,9 +254,9 @@ export function PathfindingVisualizer() {
           isWall: addWalls &&!node.isStart &&!node.isEnd,
         };
         newGrid[row][col] = newNode;
-        return newGrid;
     };
 
+    //Finds (row,col) of the start/end node <- specified by string
     const find = (start_end) => {
         for(let i = 0; i < grid.length; ++i){
             for(let j = 0; j<grid[0].length; ++j){
@@ -253,6 +272,8 @@ export function PathfindingVisualizer() {
         return false;
     }
 
+    //Returns 2D bool array of grid to determine wall locations 
+    //Also updates any non start,end, or wall nodes to have no extra class
     const getWallsArray = () => {
         const walls = [];
         for(let i = 0; i< grid.length; ++i){
@@ -267,32 +288,31 @@ export function PathfindingVisualizer() {
         return walls;
     }
 
+    //Resets grid (maintaining walls and start/end node)
     const resetGrid = () => {
-        
         const walls = getWallsArray();
         setWalls(walls);
-        //const newGrid = createGrid({start: startNode, end: endNode, walls:walls});
-        //setGrid(newGrid);
         setReset(false);
         setAddsWalls(true);
         setPopupOpen(false);
     }
 
+    //Resets grid including all walls
     const resetAll = () => {
         if(reset){
             resetGrid();
         }
-        //const newGrid = createGrid({start:startNode, end:endNode});
-        //setGrid(newGrid);
         setWalls([]);
         setAddsWalls(true);
         setPopupOpen(false);
     }
 
+    //Toggles popup menu
     const togglePopup = () => {
         if(!animation) setPopupOpen(!popupOpen);
     }
 
+    //Toggles wall setting (between add and destroy)
     const toggleWalls = () => {
         if(reset){
             resetGrid();
@@ -303,10 +323,12 @@ export function PathfindingVisualizer() {
         cancelChange();
     }
 
+    //Updating grid to select new start node
     const updateChangeStart = () => {
         if(reset){
             resetGrid();
         }
+        cancelChange(); //Handling case where other node is being updated
         setPopupOpen(false);
         setChangeStart(true);
         setChangeEnd(false);
@@ -315,10 +337,12 @@ export function PathfindingVisualizer() {
         updateGrid("node-hover-start", start[0], start[1]);
     }
 
+    //Updating grid to select new end node
     const updateChangeEnd = () => {
         if(reset){
             resetGrid();
         }
+        cancelChange(); //Handling case where other node is being updated
         setPopupOpen(false);
         setChangeEnd(true);
         setChangeStart(false);
@@ -327,6 +351,7 @@ export function PathfindingVisualizer() {
         updateGrid("node-hover-end", end[0], end[1]);
     }
 
+    //Cancelling update start/end selection
     const cancelChange = () => {
         setChangeStart(false);
         setChangeEnd(false);
@@ -336,28 +361,62 @@ export function PathfindingVisualizer() {
         updateGrid("node-end", end[0], end[1]);
     }
 
-    const rows = [];
-    for(let i = 10; i<=30; i++){
-        rows.push(i);
-    }
-
-    const cols = [];
-    for(let i = 10; i<=70; i++){
-        cols.push(i);
-    }
-
-    const updateRows = (e) => {
-        if(reset){
-            resetGrid();
-        }
+    //Updating number of rows
+    const updateRows = (e) => {        
         setNumRows(e.target.value);
-    }
-
-    const updateCols = (e) => {
+        let count = 1;
+        if(startNode.row >= e.target.value){
+            //handle if (node is endNode) or (node is a wall)
+            if(e.target.value-count === endNode.row && startNode.col === endNode.col){
+                count++;
+            }
+            grid[e.target.value-count][startNode.col].isWall=false;
+            setStartNode({...startNode, row:e.target.value-count});
+        }
+        if (endNode.row >= e.target.value){
+            //handle if (node is endNode) or (node is a wall)
+            if((e.target.value-count === startNode.row || startNode.row >= e.target.value) && startNode.col === endNode.col){ //incude case where start and end are in same column
+                count++;
+            }
+            grid[e.target.value-count][endNode.col].isWall=false;
+            setEndNode({...endNode, row:e.target.value-count});
+        }
         if(reset){
             resetGrid();
         }
+        else{
+            const walls = getWallsArray();
+            setWalls(walls);
+        }
+    }
+
+    //Updating number of columns
+    const updateCols = (e) => {        
         setNumCols(e.target.value);
+        let count = 1;
+        if(startNode.col >= e.target.value){
+            //handle if (node is endNode) or (node is a wall)
+            if(e.target.value-count === endNode.col && startNode.row === endNode.row){
+                count++;
+            }
+            grid[startNode.row][e.target.value-count].isWall=false;
+            setStartNode({...startNode, col:e.target.value-count});
+        }
+        if (endNode.col >= e.target.value){
+            //handle if (node is endNode) or (node is a wall)
+            if((e.target.value-count === startNode.col || startNode.col >= e.target.value) && startNode.row === endNode.row){ //incude case where start and end are in same row
+                count++;
+            }
+            grid[endNode.row][e.target.value-count].isWall=false;
+            setEndNode({...endNode, col:e.target.value-count});
+        }
+        if(reset){
+            resetGrid();
+        }
+        else{
+            const walls = getWallsArray();
+            setWalls(walls);
+        }
     }
 
     return (
@@ -367,8 +426,8 @@ export function PathfindingVisualizer() {
             <div className='header'>
                 {!animation && !reset && !(changeStart || changeEnd) && <button onClick={solveDijkstra}>Solve via Dijkstra's Algorithm</button>}
                 {reset && !(changeStart || changeEnd) && <button onClick = {resetGrid}>Reset Grid </button>}
-                {changeStart && <h3 style={{marginTop:'0px'}}>Select New Start Node</h3>} {/*Colour Green/red baed on action */}
-                {changeEnd && <h3 style={{marginTop:'0px'}}>Select New End Node</h3>} {/*Colour Green/red baed on action */}
+                {changeStart && <h3 style={{marginTop:'0px', color:'green'}}>Select New Start Node</h3>} 
+                {changeEnd && <h3 style={{marginTop:'0px', color:'red'}}>Select New End Node</h3>} 
                 {(changeStart||changeEnd) && <button style = {{marginBottom:'0px'}} onClick={cancelChange}>Cancel</button>}
                 <br></br>
             </div>
@@ -459,9 +518,6 @@ export function PathfindingVisualizer() {
                                             <button onClick={updateChangeEnd}>Change End Node</button> 
                                         </div>
                                     </div>
-                                    <br></br>
-                                    <button>Done</button>
-
                                     </>}
                             handleClose={togglePopup}
                             />
