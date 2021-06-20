@@ -486,7 +486,7 @@ export function PathfindingVisualizer() {
                                                     <b style={{fontSize:"15px"}}>Rows</b>
                                                 </div>
                                                 <div className="column">
-                                                <b style={{fontSize:"15px"}}>Columns</b>
+                                                    <b style={{fontSize:"15px"}}>Columns</b>
                                                 </div>
                                             </div>
                                             <div className="row">
