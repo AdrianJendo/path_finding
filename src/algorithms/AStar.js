@@ -9,33 +9,34 @@ export function AStar(grid, startNode, endNode) {
     // hCost (heuristic cost) estimated cost to the end from the current node
     const [gCosts, hCosts] = getGHCosts(startNode, endNode, grid)
 
-    startNode.cost = hCosts; // Represents the fCost of start node
+    startNode.cost = hCosts[startNode.id]; // Represents the fCost of start node
     openSet[startNode.id] = startNode;
 
     do {
-        // sortNodes(openSet) // Sort the unvisited nodes by fcost (reverse order)
-        // const cur_node = openSet.pop() // Get node with smallest fCost
         const cur_node = findSmallestFCost(openSet);
         delete openSet[cur_node.id]
         
-        //Update value of current node and append to visited list
+        // Update value of current node and append to visited list
         closedSet.push(cur_node);
         cur_node.isVisited = true;
 
-        // If current node has distance infinity, stop
-        // or if endnode is found, terminate function
-        if (cur_node.cost === Infinity || cur_node === endNode) {
+        // If endnode is found, terminate function
+        if (cur_node === endNode) {
             return closedSet;
         }
 
-		//Check the neighbours of the current node
+		// Check the neighbours of the current node
         const unvisited_neighbours = getUnvisitedNeighbours(cur_node, grid);
         for (const neighbour of unvisited_neighbours) {
             const gCost = gCosts[cur_node.id] + 1;
-            neighbour.previousNode = cur_node;
-            gCosts[neighbour.id] = gCost;
-            neighbour.cost = gCost + hCosts[neighbour.id]; // fCost
-            openSet[neighbour.id] = neighbour;
+            if (gCost < gCosts[neighbour.id]) {
+                gCosts[neighbour.id] = gCost;
+                neighbour.cost = gCost + hCosts[neighbour.id]; // fCost
+                neighbour.previousNode = cur_node;
+                if (openSet[neighbour.id] !== null) {
+                    openSet[neighbour.id] = neighbour;
+                }
+            }
         }
     } while (Object.keys(openSet).length !== 0);
     return closedSet;
@@ -48,13 +49,13 @@ const getGHCosts = (startNode, endNode, grid) => {
 
     for (let row = 0; row < grid.length; ++row) {
         for (let col = 0; col < grid[row].length; ++col) {
-            const entry = grid[row][col]
-            hCosts[entry.id] = manhattanDistance(endNode, entry);
-            if (entry.id === startNode.id) {
-                gCosts[entry.id] = 0;
+            const node = grid[row][col];
+            hCosts[node.id] = manhattanDistance(endNode, node);
+            if (node === startNode) {
+                gCosts[node.id] = 0;
             }
             else {
-                gCosts[entry.id] = Infinity;
+                gCosts[node.id] = Infinity;
             }
         }
     }
@@ -62,8 +63,9 @@ const getGHCosts = (startNode, endNode, grid) => {
 };
 
 const findSmallestFCost = (openSet) => {
-    let smallest_node = Object.values(openSet)[0];
-	for (const val of Object.values(openSet)) {
+    let openSetValues = Object.values(openSet)
+    let smallest_node = openSetValues[0];
+	for (const val of openSetValues) {
 		if (val.cost < smallest_node.cost) {
 			smallest_node = val;
 		}
@@ -76,10 +78,7 @@ const findSmallestFCost = (openSet) => {
 //https://datascience.stackexchange.com/questions/20075/when-would-one-use-manhattan-distance-as-opposed-to-euclidean-distance
 //So in a nutshell: Manhattan distance generally works only if the points are arranged in the form of a grid and the problem which we are working on gives more priority to the distance between the points only along with the grids, but not the geometric distance.
 const manhattanDistance = (node, target) => {
-    // return Math.abs(node.row-target.row) + Math.abs(node.col-target.col);
-    return Math.sqrt(
-		Math.pow(node.row-target.row, 2) + Math.pow(node.col-target.col, 2)
-	);
+    return Math.abs(node.row-target.row) + Math.abs(node.col-target.col);
 }
 
 //Returns a list of unvisited nodes surrounding the current node

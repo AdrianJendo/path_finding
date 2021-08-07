@@ -6,33 +6,33 @@ export function dijkstra(grid, startNode, endNode){
 
     //Initialize Visited List
     const visited = [];
-
     //Initialize unvisited list
-    const unvisited = [];
-    //Weights / Distances
-    for (let row = 0; row<grid.length; ++row){
-        for (let col = 0; col<grid[0].length; ++col){
-            unvisited.push(grid[row][col]); //Fill out unvisited list
-        }
-    }
-
+    const unvisited = [startNode];
     startNode.cost = 0;
-    while(unvisited.length){
-        sortNodes(unvisited) //Sort the unvisited nodes by cost (reverse order)
-        let cur_node = unvisited.pop() //Get the lowest cost node
 
-        //Update value of current node and append to visited list
+    do {
+        sortNodes(unvisited) //Sort the unvisited nodes by cost (reverse order)
+        const cur_node = unvisited.pop() //Get the lowest cost node
+
+        // Update value of current node and append to visited list
         cur_node.isVisited = true;
         visited.push(cur_node);
         
-        // If current node has distance infinity, stop
-        // or if endnode is found, terminate function
-        if (cur_node.cost === Infinity || cur_node === endNode) {
+        // If endnode is found, terminate function
+        if (cur_node === endNode) {
             return visited
         };
 
-        updateNeighbours(cur_node, grid);
-    }
+        // Updates the nodes surrounding the current node to include the current node as the previous node
+        const unvisited_neighbours = getUnvisitedNeighbours(cur_node, grid);
+        for (const neighbour of unvisited_neighbours) {
+            if (!unvisited.includes(neighbour)) {
+                neighbour.previousNode = cur_node;
+                neighbour.cost = cur_node.cost + 1;
+                unvisited.push(neighbour);
+            }
+        }
+    } while (unvisited.length);
     return visited;
 }
 
@@ -43,23 +43,22 @@ const sortNodes = (unvisited) => {
     unvisited.sort((a, b) => b.cost - a.cost);
 }
 
-//Updates the nodes surrounding the current node to include the current node as the previous node
-const updateNeighbours = (node, grid) => {
-    const unvisited_neighbours = getUnvisitedNeighbours(node, grid);
-    for (const neighbour of unvisited_neighbours) {
-        neighbour.previousNode = node;
-        neighbour.cost = node.cost+1;
-    }
-}
-
 //Returns a list of unvisited nodes surrounding the current node
 const getUnvisitedNeighbours = (node, grid) => {
     const neighbours = [];
     const {col, row} = node;
-    if (row > 0) neighbours.push(grid[row - 1][col]);
-    if (row < grid.length - 1) neighbours.push(grid[row + 1][col]);
-    if (col > 0) neighbours.push(grid[row][col - 1]);
-    if (col < grid[0].length - 1) neighbours.push(grid[row][col + 1]);
+    if (row > 0) {
+        neighbours.push(grid[row - 1][col]);
+    }
+    if (row < grid.length - 1) {
+        neighbours.push(grid[row + 1][col]);
+    }
+    if (col > 0) {
+        neighbours.push(grid[row][col - 1]);
+    }
+    if (col < grid[0].length - 1) {
+        neighbours.push(grid[row][col + 1]);
+    }
     return neighbours.filter(neighbour => !neighbour.isVisited && !neighbour.isWall);
 }
 

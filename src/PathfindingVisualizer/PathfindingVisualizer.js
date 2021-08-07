@@ -82,7 +82,7 @@ export function PathfindingVisualizer() {
             isHover : false,
             previousNode : null,
             cost: Infinity,
-            id: row.toString() + col.toString() // Unique permutation so that each node has its own string id
+            id: "row" + row.toString() + "col" + col.toString() // Unique permutation so that each node has its own string id
         };
     };
 
@@ -126,7 +126,7 @@ export function PathfindingVisualizer() {
             //Only update class of node of interest
             setTimeout(() => {
                 const node = visited_nodes[i];
-                if(i!== 0 && i!== visited_nodes.length-1){
+                if(!node.isStart && !node.isEnd){
                     document.getElementById(`node-${node.row}-${node.col}`).className =
                     'node node-visited';
                 }
