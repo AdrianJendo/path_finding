@@ -8,10 +8,15 @@
   display: inline-block;
 }
 
+.headerButton {
+  margin-left: 20px;
+  margin-right: 20px;
+}
+
 .settings {
   position: absolute;
-  top: 0px;
-  right: 0px;
+  top: 20px;
+  right: 100px;
   margin-right: 5px;
   margin-top: 20px;
 }

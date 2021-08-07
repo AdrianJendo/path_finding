@@ -1,15 +1,17 @@
-import React, {useCallback, useEffect, useState} from 'react';
-import {Node} from './Node/Node';
-import {Popup} from './Popup';
+import React, { useCallback, useEffect, useState } from 'react';
+import { Node } from './Node/Node';
+import { Popup } from './Popup';
 import "./PathfindingVisualizer.css";
-import {dijkstra, getShortestPath} from "../algorithms/dijkstra";
+import { dijkstra, getShortestPath } from "../algorithms/dijkstra";
+import { AStar } from "../algorithms/AStar";
 
-const NUMROWS = 20;
-const NUMCOLS = 20;
-const START_NODE_ROW = 10;
+const NUMROWS = 25;
+const NUMCOLS = 50;
+const START_NODE_ROW = 12;
 const START_NODE_COL = 5;
-const END_NODE_ROW = 10;
-const END_NODE_COL = 15;
+const END_NODE_ROW = 12;
+const END_NODE_COL = 45;
+const ANIMATION_SPEED = 30; // 12
 
 //For later
 //Code using A* and also switch between Dijsktra and A*
@@ -79,7 +81,8 @@ export function PathfindingVisualizer() {
             isWall : walls.length && row<walls.length && col < walls[0].length && walls[row][col],
             isHover : false,
             previousNode : null,
-            cost: Infinity
+            cost: Infinity,
+            id: row.toString() + col.toString() // Unique permutation so that each node has its own string id
         };
     };
 
@@ -94,11 +97,19 @@ export function PathfindingVisualizer() {
         setAnimation(true);
     };
 
+    //Solves current grid using A*
+    const solveAStar = () => {
+        const start = grid[startNode.row][startNode.col];
+        const end = grid[endNode.row][endNode.col];
+        const visited_nodes = AStar(grid, start, end); //returns a list of visited nodes
+        const shortest_path_list = getShortestPath(end); //returns the shortest path from end node to start node
+        animateDijkstra(visited_nodes, shortest_path_list);
+        setAnimation(true);
+    };
+
     //Animates Dijkstra's Algorithm
     const animateDijkstra = (visited_nodes, shortest_path_list) => {
         //Iterate through visited nodes
-        //let new_grid = grid.slice();
-        const update_interval = 7;
         for(let i =0; i<visited_nodes.length; ++i){
             /*
             //Updating entire state is not efficient
@@ -119,13 +130,13 @@ export function PathfindingVisualizer() {
                     document.getElementById(`node-${node.row}-${node.col}`).className =
                     'node node-visited';
                 }
-              }, update_interval*i);
+              }, ANIMATION_SPEED*i);
         }      
         
         //After animating the visited nodes, do the shortest path animation
         setTimeout(() => {
             animateShortestPath(shortest_path_list);
-        }, update_interval * visited_nodes.length)
+        }, ANIMATION_SPEED * visited_nodes.length)
     };
 
     //Animates shortest path
@@ -424,7 +435,13 @@ export function PathfindingVisualizer() {
             <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"></link>
             <button onClick={togglePopup} className="settings"><span className="fa fa-gear"></span></button>
             <div className='header'>
-                {!animation && !reset && !(changeStart || changeEnd) && <button onClick={solveDijkstra}>Solve via Dijkstra's Algorithm</button>}
+                {!animation && !reset && !(changeStart || changeEnd) &&
+                    <div>
+                        <button className="headerButton" onClick={solveDijkstra}>Dijkstra's Algorithm</button>
+                        <button className = "headerButton" onClick={solveAStar}>A* Algorithm</button>
+                        <button className = "headerButton" onClick={solveDijkstra}>Greedy Best-First Search</button>
+                    </div>
+                }
                 {reset && !(changeStart || changeEnd) && <button onClick = {resetGrid}>Reset Grid </button>}
                 {changeStart && <h3 style={{marginTop:'0px', color:'green'}}>Select New Start Node</h3>} 
                 {changeEnd && <h3 style={{marginTop:'0px', color:'red'}}>Select New End Node</h3>} 

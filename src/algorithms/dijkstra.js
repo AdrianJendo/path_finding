@@ -21,23 +21,19 @@ export function dijkstra(grid, startNode, endNode){
         sortNodes(unvisited) //Sort the unvisited nodes by cost (reverse order)
         let cur_node = unvisited.pop() //Get the lowest cost node
 
-        //Pass if current node is a wall or it has no previous node (ie: it is beind a wall)
-        if (cur_node.isWall) continue;
-
         //Update value of current node and append to visited list
         cur_node.isVisited = true;
         visited.push(cur_node);
         
-        //If current node has distance infinity, stop
-        if (cur_node.cost === Infinity) return visited;
+        // If current node has distance infinity, stop
+        // or if endnode is found, terminate function
+        if (cur_node.cost === Infinity || cur_node === endNode) {
+            return visited
+        };
 
-        //If endnode is found, terminate function
-        if (cur_node === endNode) {
-            return visited;
-        } else {
-            updateNeighbours(cur_node, grid);
-        }
+        updateNeighbours(cur_node, grid);
     }
+    return visited;
 }
 
 //Returns reverse ordered array of unvisited nodes by cost
@@ -49,8 +45,8 @@ const sortNodes = (unvisited) => {
 
 //Updates the nodes surrounding the current node to include the current node as the previous node
 const updateNeighbours = (node, grid) => {
-    let  unvisited_neighbours = getUnvisitedNeighbours(node, grid);
-    for (const neighbour of unvisited_neighbours){
+    const unvisited_neighbours = getUnvisitedNeighbours(node, grid);
+    for (const neighbour of unvisited_neighbours) {
         neighbour.previousNode = node;
         neighbour.cost = node.cost+1;
     }
@@ -64,7 +60,7 @@ const getUnvisitedNeighbours = (node, grid) => {
     if (row < grid.length - 1) neighbours.push(grid[row + 1][col]);
     if (col > 0) neighbours.push(grid[row][col - 1]);
     if (col < grid[0].length - 1) neighbours.push(grid[row][col + 1]);
-    return neighbours.filter(neighbour => !neighbour.isVisited); //&& !neighbour.isWall <--------------------------------------------------------------------------------!!!
+    return neighbours.filter(neighbour => !neighbour.isVisited && !neighbour.isWall);
 }
 
 //Returns a list of the shortest path of nodes
@@ -72,15 +68,10 @@ const getUnvisitedNeighbours = (node, grid) => {
 export function getShortestPath(endNode) {
     const shortestPath = [];
     let cur = endNode;
-    while(cur) {
+    while (cur) {
         shortestPath.unshift(cur); //Add current node to start of shortestPath list
         cur = cur.previousNode;
     }
 
     return shortestPath;
 }
-
-
-//AStart (use manhattan distance)
-//https://datascience.stackexchange.com/questions/20075/when-would-one-use-manhattan-distance-as-opposed-to-euclidean-distance
-//So in a nutshell: Manhattan distance generally works only if the points are arranged in the form of a grid and the problem which we are working on gives more priority to the distance between the points only along with the grids, but not the geometric distance.
