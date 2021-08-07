@@ -79,3 +79,8 @@ export function getShortestPath(endNode) {
 
     return shortestPath;
 }
+
+
+//AStart (use manhattan distance)
+//https://datascience.stackexchange.com/questions/20075/when-would-one-use-manhattan-distance-as-opposed-to-euclidean-distance
+//So in a nutshell: Manhattan distance generally works only if the points are arranged in the form of a grid and the problem which we are working on gives more priority to the distance between the points only along with the grids, but not the geometric distance.
