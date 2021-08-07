@@ -2,8 +2,10 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { Node } from './Node/Node';
 import { Popup } from './Popup';
 import "./PathfindingVisualizer.css";
-import { dijkstra, getShortestPath } from "../algorithms/dijkstra";
+import { dijkstra } from "../algorithms/dijkstra";
+import { getShortestPath } from "../algorithms/helpers";
 import { AStar } from "../algorithms/AStar";
+import {greedyBestFirstSearch} from "../algorithms/greedybest"
 
 const NUMROWS = 25;
 const NUMCOLS = 50;
@@ -11,7 +13,7 @@ const START_NODE_ROW = 12;
 const START_NODE_COL = 5;
 const END_NODE_ROW = 12;
 const END_NODE_COL = 45;
-const ANIMATION_SPEED = 30; // 12
+const ANIMATION_SPEED = 12;
 
 //For later
 //Code using A* and also switch between Dijsktra and A*
@@ -102,6 +104,16 @@ export function PathfindingVisualizer() {
         const start = grid[startNode.row][startNode.col];
         const end = grid[endNode.row][endNode.col];
         const visited_nodes = AStar(grid, start, end); //returns a list of visited nodes
+        const shortest_path_list = getShortestPath(end); //returns the shortest path from end node to start node
+        animateDijkstra(visited_nodes, shortest_path_list);
+        setAnimation(true);
+    };
+
+    //Solves current grid using greedy best-first search
+    const solveGreedyBestFirstSearch = () => {
+        const start = grid[startNode.row][startNode.col];
+        const end = grid[endNode.row][endNode.col];
+        const visited_nodes = greedyBestFirstSearch(grid, start, end); //returns a list of visited nodes
         const shortest_path_list = getShortestPath(end); //returns the shortest path from end node to start node
         animateDijkstra(visited_nodes, shortest_path_list);
         setAnimation(true);
@@ -439,7 +451,7 @@ export function PathfindingVisualizer() {
                     <div>
                         <button className="headerButton" onClick={solveDijkstra}>Dijkstra's Algorithm</button>
                         <button className = "headerButton" onClick={solveAStar}>A* Algorithm</button>
-                        <button className = "headerButton" onClick={solveDijkstra}>Greedy Best-First Search</button>
+                        <button className = "headerButton" onClick={solveGreedyBestFirstSearch}>Greedy Best-First Search</button>
                     </div>
                 }
                 {reset && !(changeStart || changeEnd) && <button onClick = {resetGrid}>Reset Grid </button>}

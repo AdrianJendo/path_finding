@@ -1,3 +1,5 @@
+import { getUnvisitedNeighbours, manhattanDistance } from "./helpers";
+
 // Returns an array of visited nodes (closed set) between startNode and endNode using A* with manhattan distance
 export function AStar(grid, startNode, endNode) {
     // Initialize Visited List
@@ -17,8 +19,8 @@ export function AStar(grid, startNode, endNode) {
         delete openSet[cur_node.id]
         
         // Update value of current node and append to visited list
-        closedSet.push(cur_node);
         cur_node.isVisited = true;
+        closedSet.push(cur_node);
 
         // If endnode is found, terminate function
         if (cur_node === endNode) {
@@ -72,24 +74,4 @@ const findSmallestFCost = (openSet) => {
 	}
 
 	return smallest_node;
-}
-
-//AStar heuristic
-//https://datascience.stackexchange.com/questions/20075/when-would-one-use-manhattan-distance-as-opposed-to-euclidean-distance
-//So in a nutshell: Manhattan distance generally works only if the points are arranged in the form of a grid and the problem which we are working on gives more priority to the distance between the points only along with the grids, but not the geometric distance.
-const manhattanDistance = (node, target) => {
-    return Math.abs(node.row-target.row) + Math.abs(node.col-target.col);
-}
-
-//Returns a list of unvisited nodes surrounding the current node
-const getUnvisitedNeighbours = (node, grid) => {
-    const neighbours = [];
-    const {col, row} = node;
-    if (row > 0) neighbours.push(grid[row - 1][col]);
-    if (row < grid.length - 1) neighbours.push(grid[row + 1][col]);
-    if (col > 0) neighbours.push(grid[row][col - 1]);
-    if (col < grid[0].length - 1) neighbours.push(grid[row][col + 1]);
-    return neighbours.filter(neighbour =>
-        !neighbour.isVisited && !neighbour.isWall
-    );
 }
