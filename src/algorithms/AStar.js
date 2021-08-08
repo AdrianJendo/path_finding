@@ -35,7 +35,7 @@ export function AStar(grid, startNode, endNode) {
                 gCosts[neighbour.id] = gCost;
                 neighbour.cost = gCost + hCosts[neighbour.id]; // fCost
                 neighbour.previousNode = cur_node;
-                if (openSet[neighbour.id] !== null) {
+                if (!openSet[neighbour.id]) {
                     openSet[neighbour.id] = neighbour;
                 }
             }
@@ -72,6 +72,5 @@ const findSmallestFCost = (openSet) => {
 			smallest_node = val;
 		}
 	}
-
 	return smallest_node;
 }

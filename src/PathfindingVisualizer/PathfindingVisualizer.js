@@ -15,11 +15,7 @@ const END_NODE_ROW = 12;
 const END_NODE_COL = 45;
 const ANIMATION_SPEED = 12;
 
-//For later
-//Code using A* and also switch between Dijsktra and A*
-
 export function PathfindingVisualizer() {
-
     //States for handling grid, animation, popup, mouse
     const [grid, setGrid] = useState([]);
     const [mouseIsPressed, setMouseIsPressed] = useState(false);
@@ -69,7 +65,6 @@ export function PathfindingVisualizer() {
         setGrid(new_grid);
     }, [createGrid]);
 
-    
     //Returns new node
     const createNode = (row, col, {start, end, walls}={}) => {
         let start_node = row === start.row && col === start.col;
@@ -88,14 +83,13 @@ export function PathfindingVisualizer() {
         };
     };
 
-
     //Solves current grid using Dijkstra's Algorithm
     const solveDijkstra = () => {
         const start = grid[startNode.row][startNode.col];
         const end = grid[endNode.row][endNode.col];
         const visited_nodes = dijkstra(grid, start, end); //returns a list of visited nodes
         const shortest_path_list = getShortestPath(end); //returns the shortest path from end node to start node
-        animateDijkstra(visited_nodes, shortest_path_list);
+        animatePathFinding(visited_nodes, shortest_path_list);
         setAnimation(true);
     };
 
@@ -105,7 +99,7 @@ export function PathfindingVisualizer() {
         const end = grid[endNode.row][endNode.col];
         const visited_nodes = AStar(grid, start, end); //returns a list of visited nodes
         const shortest_path_list = getShortestPath(end); //returns the shortest path from end node to start node
-        animateDijkstra(visited_nodes, shortest_path_list);
+        animatePathFinding(visited_nodes, shortest_path_list, 1.5);
         setAnimation(true);
     };
 
@@ -115,12 +109,12 @@ export function PathfindingVisualizer() {
         const end = grid[endNode.row][endNode.col];
         const visited_nodes = greedyBestFirstSearch(grid, start, end); //returns a list of visited nodes
         const shortest_path_list = getShortestPath(end); //returns the shortest path from end node to start node
-        animateDijkstra(visited_nodes, shortest_path_list);
+        animatePathFinding(visited_nodes, shortest_path_list, 2);
         setAnimation(true);
     };
 
     //Animates Dijkstra's Algorithm
-    const animateDijkstra = (visited_nodes, shortest_path_list) => {
+    const animatePathFinding = (visited_nodes, shortest_path_list, delayMultiplier=1) => {
         //Iterate through visited nodes
         for(let i =0; i<visited_nodes.length; ++i){
             /*
@@ -142,13 +136,13 @@ export function PathfindingVisualizer() {
                     document.getElementById(`node-${node.row}-${node.col}`).className =
                     'node node-visited';
                 }
-              }, ANIMATION_SPEED*i);
+              }, ANIMATION_SPEED * i * delayMultiplier);
         }      
         
         //After animating the visited nodes, do the shortest path animation
         setTimeout(() => {
             animateShortestPath(shortest_path_list);
-        }, ANIMATION_SPEED * visited_nodes.length)
+        }, ANIMATION_SPEED * visited_nodes.length * delayMultiplier)
     };
 
     //Animates shortest path
@@ -156,7 +150,7 @@ export function PathfindingVisualizer() {
         for(let i = 0; i < shortest_path.length; ++i){
             setTimeout( () => {
                 const node = shortest_path[i];
-                if(i!==0 && i!==shortest_path.length-1){
+                if(!node.isStart && !node.isEnd){
                     //Updating only the class to improve speed/fluidity of animation
                     document.getElementById(`node-${node.row}-${node.col}`).className =
                     'node node-shortest-path';
@@ -165,7 +159,7 @@ export function PathfindingVisualizer() {
                     setReset(true);
                     setAnimation(false);
                 }
-            }, 50*i);
+            }, 50 * i);
         }
     };
 
@@ -454,10 +448,14 @@ export function PathfindingVisualizer() {
                         <button className = "headerButton" onClick={solveGreedyBestFirstSearch}>Greedy Best-First Search</button>
                     </div>
                 }
-                {reset && !(changeStart || changeEnd) && <button onClick = {resetGrid}>Reset Grid </button>}
-                {changeStart && <h3 style={{marginTop:'0px', color:'green'}}>Select New Start Node</h3>} 
-                {changeEnd && <h3 style={{marginTop:'0px', color:'red'}}>Select New End Node</h3>} 
-                {(changeStart||changeEnd) && <button style = {{marginBottom:'0px'}} onClick={cancelChange}>Cancel</button>}
+                {reset && !(changeStart || changeEnd) && <button onClick={resetGrid}>Reset Grid</button>}
+                {(changeStart || changeEnd) &&
+                    <div>
+                        {changeStart && <h3 style={{marginTop:'0px', color:'green'}}>Select New Start Node</h3>} 
+                        {changeEnd && <h3 style={{marginTop:'0px', color:'red'}}>Select New End Node</h3>} 
+                        <button onClick={cancelChange}>Cancel</button>
+                    </div>
+                }
                 <br></br>
             </div>
 
@@ -551,9 +549,7 @@ export function PathfindingVisualizer() {
                             handleClose={togglePopup}
                             />
             }
-            
         </div>
-        
     );
 }
 
