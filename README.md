@@ -1,13 +1,10 @@
 # Path Finding
 
 ## About
-Simple pathfinding algorithm visualizer coded using react.
+Simple pathfinding algorithm visualizer created using react.
 
 ## Web App Preview
-<p align="center">
-    <img src="https://i.gyazo.com/9bbcbd0aa8f3d6fb2a193dcb3bb0b682.gif" alt="preview gif"/>
-</p> <br/> <br/> 
 
-<p align="center">
-    <img src="https://i.gyazo.com/19470bdf49e3da2c4f5b61ccfdbe104a.gif" alt="preview gif"/>
-</p> <br/> <br/>
+https://user-images.githubusercontent.com/55325093/128616911-1c1cfdec-c715-4c40-9339-63a7d3d214dd.mov
+
+https://user-images.githubusercontent.com/55325093/128616905-009cfbd2-abee-464c-8ff9-1df5f22c2237.mov
