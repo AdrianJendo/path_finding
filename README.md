@@ -1,7 +1,7 @@
 # Path Finding
 
 ## About
-Simple pathfinding algorithm coded using javascript.
+Simple pathfinding algorithm visualizer coded using react.
 
 ## Web App Preview
 <p align="center">
