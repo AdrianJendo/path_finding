@@ -15,7 +15,7 @@ export function AStar(grid, startNode, endNode) {
     openSet[startNode.id] = startNode;
 
     do {
-        const cur_node = findSmallestFCost(openSet);
+        const cur_node = findSmallestFCost(openSet, gCosts);
         delete openSet[cur_node.id]
         
         // Update value of current node and append to visited list
@@ -64,13 +64,16 @@ const getGHCosts = (startNode, endNode, grid) => {
 	return [gCosts, hCosts];
 };
 
-const findSmallestFCost = (openSet) => {
+const findSmallestFCost = (openSet, gCosts) => {
     let openSetValues = Object.values(openSet)
     let smallest_node = openSetValues[0];
 	for (const val of openSetValues) {
-		if (val.cost < smallest_node.cost) {
+		if (
+            val.cost < smallest_node.cost ||
+            (val.cost === smallest_node.cost && gCosts[val.id] < gCosts[smallest_node.id])
+        ) {
 			smallest_node = val;
-		}
+        }
 	}
 	return smallest_node;
 }
